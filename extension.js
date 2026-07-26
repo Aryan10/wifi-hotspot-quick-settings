@@ -22,14 +22,14 @@ class HotspotMenuController {
 
         for (const entry of this._entries.values()) {
             try {
-                if (entry.signalId && entry.menu)
+                if (entry.signalId)
                     entry.menu.disconnect(entry.signalId);
             } catch (e) {
                 this._logger?.message(`cleanup: failed to disconnect signal: ${e}`);
             }
 
             try {
-                entry.item?.destroy?.();
+                entry.item.destroy();
             } catch (e) {
                 this._logger?.message(`cleanup: failed to destroy menu item: ${e}`);
             }
@@ -60,12 +60,13 @@ class HotspotMenuController {
 
     _moveBeforeAllNetworks(menu, item) {
         const allNetworksItem = menu._settingsActions?.[WIFI_PANEL_DESKTOP_FILE];
-        if (!allNetworksItem || typeof menu._getMenuItems !== 'function')
+        if (!allNetworksItem)
             return;
 
         const items = menu._getMenuItems();
         const position = items.indexOf(allNetworksItem);
-        if (position >= 0 && typeof menu.moveMenuItem === 'function')
+
+        if (position >= 0)
             menu.moveMenuItem(item, position);
     }
 
