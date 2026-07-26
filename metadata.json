@@ -2,6 +2,7 @@
   "name": "Wi-Fi Hotspot Quick Settings",
   "description": "Adds a Turn On Wi-Fi Hotspot item above All Networks in the Wi-Fi QS menu.",
   "uuid": "wifi-hotspot-quick-settings@aryan10.github.io",
+  "url": "https://github.com/Aryan10/wifi-hotspot-quick-settings",
   "shell-version": [
     "50"
   ],
