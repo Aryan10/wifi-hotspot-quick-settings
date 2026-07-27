@@ -21,26 +21,16 @@ class HotspotMenuController {
         this._cancellable.cancel();
 
         for (const entry of this._entries.values()) {
-            try {
-                if (entry.signalId)
-                    entry.menu.disconnect(entry.signalId);
-            } catch (e) {
-                this._logger?.message(`cleanup: failed to disconnect signal: ${e}`);
-            }
-
-            try {
-                entry.item.destroy();
-            } catch (e) {
-                this._logger?.message(`cleanup: failed to destroy menu item: ${e}`);
-            }
+            entry.menu.disconnect(entry.signalId);
+            entry.item.destroy();
         }
 
         this._entries.clear();
     }
 
     attachIndicator(indicator) {
-        const menu = indicator?._wirelessToggle?.menu;
-        if (!menu || this._entries.has(menu))
+        const menu = indicator._wirelessToggle.menu;
+        if (this._entries.has(menu))
             return;
 
         const item = menu.addAction(HOTSPOT_LABEL, () => {
@@ -59,7 +49,7 @@ class HotspotMenuController {
     }
 
     _moveBeforeAllNetworks(menu, item) {
-        const allNetworksItem = menu._settingsActions?.[WIFI_PANEL_DESKTOP_FILE];
+        const allNetworksItem = menu._settingsActions[WIFI_PANEL_DESKTOP_FILE];
         if (!allNetworksItem)
             return;
 
@@ -72,19 +62,12 @@ class HotspotMenuController {
 
     _syncEntry(menu, indicator) {
         const entry = this._entries.get(menu);
-        if (!entry)
-            return;
-
-        const active = this._isHotspotActive(indicator);
-        entry.item.visible = !active;
+        entry.item.visible = !this._isHotspotActive(indicator);
     }
 
     _isHotspotActive(indicator) {
-        const primaryItem = indicator?._wirelessToggle?._itemBinding?.source;
-        if (typeof primaryItem?.is_hotspot === 'boolean')
-            return primaryItem.is_hotspot;
-
-        return false;
+        const primaryItem = indicator._wirelessToggle._itemBinding.source;
+        return primaryItem.is_hotspot;
     }
 
     async _turnOnHotspot(indicator) {
@@ -95,14 +78,7 @@ class HotspotMenuController {
             return;
         }
 
-        this._syncIndicator(indicator);
-    }
-
-    _syncIndicator(indicator) {
-        for (const entry of this._entries.values()) {
-            if (entry.indicator === indicator)
-                this._syncEntry(entry.menu, indicator);
-        }
+        this._syncEntry(indicator._wirelessToggle.menu, indicator);
     }
 
     _runCommand(argv) {
@@ -115,24 +91,20 @@ class HotspotMenuController {
                     Gio.SubprocessFlags.STDERR_PIPE
                 );
             } catch (e) {
-                resolve({ok: false, stdout: '', stderr: String(e)});
+                resolve({ok: false, stderr: String(e)});
                 return;
             }
 
             proc.communicate_utf8_async(null, this._cancellable, (p, res) => {
                 try {
-                    const [, stdout, stderr] = p.communicate_utf8_finish(res);
-                    resolve({
-                        ok: p.get_successful(),
-                        stdout: stdout ?? '',
-                        stderr: stderr ?? '',
-                    });
+                    const [, , stderr] = p.communicate_utf8_finish(res);
+                    resolve({ok: p.get_successful(), stderr: stderr ?? ''});
                 } catch (e) {
                     // Gio.IOErrorEnum.CANCELLED is expected during disable()
-                    if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                        resolve({ok: false, stdout: '', stderr: 'cancelled'});
+                    if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                        resolve({ok: false, stderr: 'cancelled'});
                     else
-                        resolve({ok: false, stdout: '', stderr: String(e)});
+                        resolve({ok: false, stderr: String(e)});
                 }
             });
         });
@@ -144,36 +116,31 @@ export default class WifiHotspotQuickSettingsMenuExtension extends Extension {
         this._logger = this.getLogger();
         this._controller = new HotspotMenuController(this._logger);
 
-        const ext = this;
+        const controller = this._controller;
         this._injectionManager = new InjectionManager();
         this._injectionManager.overrideMethod(
             Network.Indicator.prototype, '_init',
             originalMethod => {
                 return function (...args) {
                     const result = originalMethod.call(this, ...args);
-                    ext._controller?.attachIndicator(this);
+                    controller.attachIndicator(this);
                     return result;
                 };
             }
         );
 
-        this._attachExistingIndicators();
+        const indicator = Main.panel.statusArea.quickSettings._network;
+        if (indicator)
+            this._controller.attachIndicator(indicator);
     }
 
     disable() {
-        this._injectionManager?.clear();
+        this._injectionManager.clear();
         this._injectionManager = null;
 
-        this._controller?.destroy();
+        this._controller.destroy();
         this._controller = null;
 
         this._logger = null;
-    }
-
-    _attachExistingIndicators() {
-        // Attach to the existing network indicator if present.
-        const indicator = Main.panel.statusArea?.quickSettings?._network;
-        if (indicator)
-            this._controller.attachIndicator(indicator);
     }
 }
