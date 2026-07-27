@@ -1,16 +1,26 @@
 # Wi-Fi Hotspot Quick Settings
 
+[![GNOME Extensions](https://img.shields.io/badge/GNOME%20Extensions-10566-4A86CF?logo=gnome)](https://extensions.gnome.org/extension/10566/wi-fi-hotspot-quick-settings/)
+![GNOME Shell](https://img.shields.io/badge/GNOME%20Shell-50-4A86CF?logo=gnome)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
 A GNOME Shell extension that adds a **"Turn On Wi-Fi Hotspot"** action directly to the Wi-Fi Quick Settings menu, just above **"All Networks"**.
+
+GNOME already provides a convenient way to turn off a hotspot once it is active, but turning one on requires opening the Settings application. This extension fills that small usability gap by making hotspot activation available directly from Quick Settings.
 
 <img width="415" height="358" alt="image" src="https://github.com/user-attachments/assets/06885196-7c44-4c22-8189-b545e2ed5509" />
 
-GNOME already provides a convenient way to turn **off** a hotspot once it is active, but turning one **on** requires opening the Settings application. This extension fills that small usability gap by making hotspot activation available directly from Quick Settings.
+## Compatibility
 
-The extension currently supports **GNOME Shell 50**, which is the only version it has been tested on. Since it relies on patching GNOME Shell internals, compatibility with future (or past) versions cannot be guaranteed without testing. If you've tested the extension on another GNOME Shell version, feel free to open an issue or pull request to report compatibility.
-
-Hotspot activation is performed using NetworkManager's `nmcli` utility and enables the default **"Hotspot"** connection.
+Tested on GNOME Shell 50. The extension patches GNOME Shell internals, so compatibility with other versions is not guaranteed. If you've tested it on another version, feel free to open an issue or pull request. Hotspot activation requires `nmcli`.
 
 ## Installation
+
+### From GNOME Extensions
+
+Install directly from:
+
+https://extensions.gnome.org/extension/10566/wi-fi-hotspot-quick-settings/
 
 ### Manual installation
 
