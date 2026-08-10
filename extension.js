@@ -8,7 +8,8 @@ const HOTSPOT_LABEL = _('Turn On Wi-Fi Hotspot');
 const WIFI_PANEL_DESKTOP_FILE = 'gnome-wifi-panel.desktop';
 
 // Hotspot activation is delegated to NetworkManager CLI.
-const HOTSPOT_COMMAND = ['nmcli', 'device', 'wifi', 'hotspot'];
+const ENABLE_WIFI_COMMAND = ['nmcli', 'radio', 'wifi', 'on'];
+const ENABLE_HOTSPOT_COMMAND = ['nmcli', 'device', 'wifi', 'hotspot'];
 
 class HotspotMenuController {
     constructor(logger) {
@@ -71,13 +72,18 @@ class HotspotMenuController {
     }
 
     async _turnOnHotspot(indicator) {
-        const result = await this._runCommand(HOTSPOT_COMMAND);
-
+        let result = await this._runCommand(ENABLE_WIFI_COMMAND);
+        if (!result.ok) {
+            this._logger?.message(`failed to enable Wi-Fi: ${result.stderr}`);
+            return;
+        }
+    
+        result = await this._runCommand(ENABLE_HOTSPOT_COMMAND);
         if (!result.ok) {
             this._logger?.message(`failed to enable hotspot: ${result.stderr}`);
             return;
         }
-
+    
         this._syncEntry(indicator._wirelessToggle.menu, indicator);
     }
 
