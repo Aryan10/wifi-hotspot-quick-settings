@@ -4,7 +4,9 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Network from 'resource:///org/gnome/shell/ui/status/network.js';
 import {Extension, InjectionManager} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const HOTSPOT_LABEL = _('Turn On Wi-Fi Hotspot');
+const gettext = (extension, message) => extension.gettext(message);
+
+const HOTSPOT_LABEL = 'Turn On Wi-Fi Hotspot';
 const WIFI_PANEL_DESKTOP_FILE = 'gnome-wifi-panel.desktop';
 
 // Hotspot activation is delegated to NetworkManager CLI.
@@ -12,7 +14,8 @@ const ENABLE_WIFI_COMMAND = ['nmcli', 'radio', 'wifi', 'on'];
 const ENABLE_HOTSPOT_COMMAND = ['nmcli', 'device', 'wifi', 'hotspot'];
 
 class HotspotMenuController {
-    constructor(logger) {
+    constructor(extension, logger) {
+        this._ = message => gettext(extension, message);
         this._entries = new Map(); // menu -> {indicator, menu, item, signalId}
         this._cancellable = new Gio.Cancellable();
         this._logger = logger;
@@ -34,7 +37,7 @@ class HotspotMenuController {
         if (this._entries.has(menu))
             return;
 
-        const item = menu.addAction(HOTSPOT_LABEL, () => {
+        const item = menu.addAction(this._(HOTSPOT_LABEL), () => {
             this._turnOnHotspot(indicator).catch(e =>
                 this._logger?.message(`failed to turn on hotspot: ${e}`));
         });
@@ -120,7 +123,7 @@ class HotspotMenuController {
 export default class WifiHotspotQuickSettingsMenuExtension extends Extension {
     enable() {
         this._logger = this.getLogger();
-        this._controller = new HotspotMenuController(this._logger);
+        this._controller = new HotspotMenuController(this, this._logger);
 
         const controller = this._controller;
         this._injectionManager = new InjectionManager();
